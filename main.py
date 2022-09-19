@@ -1,19 +1,11 @@
 import csv
 import json
+import pathlib
 from collections import defaultdict
 
 from PIL import Image
 
 data_dir = '../Dataset/ROBINv1.1'
-
-start_id = {'train.csv': 10_000,
-            'iid.csv': 20_000,
-            'context_bias.csv': 30_000,
-            'occlusion_bias.csv': 40_000,
-            'pose_bias.csv': 50_000,
-            'shape_bias.csv': 60_000,
-            'texture_bias.csv': 70_000,
-            'weather_bias.csv': 80_000}
 
 
 def csv2coco():
@@ -27,14 +19,16 @@ def csv2coco():
                'motorbike',
                'sofa',
                'train')
-    phases = ['iid_test',
+    phases = ['train',
+              'iid_test',
               'nuisances/context',
               'nuisances/occlusion',
               'nuisances/pose',
               'nuisances/shape',
               'nuisances/texture',
               'nuisances/weather']
-    csv_names = ['iid.csv',
+    csv_names = ['train.csv',
+                 'iid.csv',
                  'context_bias.csv',
                  'occlusion_bias.csv',
                  'pose_bias.csv',
@@ -48,7 +42,6 @@ def csv2coco():
                             "annotations": [],
                             "categories": []}
         box_id = 1
-        img_id = start_id[csv_name]
         annotations = defaultdict(list)
         with open(f'{data_dir}/{phase}/{csv_name}', 'r') as f:
             csv_data = csv.reader(f, delimiter=',')
@@ -63,7 +56,7 @@ def csv2coco():
             img_info = {'file_name': filename,
                         'height': height,
                         'width': width,
-                        'id': img_id}
+                        'id': pathlib.Path(filename).stem}
             output_json_dict['images'].append(img_info)
 
             for ann in annotation:
@@ -77,11 +70,10 @@ def csv2coco():
                                                         'bbox': [x_min, y_min, box_w, box_h],
                                                         'category_id': category_id,
                                                         'ignore': 0,
-                                                        'image_id': img_id,
+                                                        'image_id': pathlib.Path(filename).stem,
                                                         'id': box_id,
                                                         'segmentation': []})
                 box_id += 1
-            img_id += 1
 
         for label_id, label in enumerate(classes):
             category_info = {'supercategory': label, 'id': label_id + 1, 'name': label}
