@@ -1,8 +1,13 @@
+import argparse
 import csv
 import json
+import os
 import pathlib
 from collections import defaultdict
 
+import cv2
+import mmcv
+import tqdm
 from PIL import Image
 
 data_dir = '../Dataset/ROBINv1.1'
@@ -84,8 +89,76 @@ def csv2coco():
             f.write(output_json)
 
 
+def image2coco():
+    # 1 load image list info
+    infos = []
+    filenames = [x for x in os.listdir(f'{data_dir}/phase2/images/') if x.endswith('jpg')]
+    for filename in tqdm.tqdm(filenames):
+        try:
+            image = cv2.imread(f'{data_dir}/phase2/images/{filename}')
+            height, width = image.shape[:2]
+        except cv2.error:
+            with open(f'{data_dir}/phase2/images/{filename}', 'rb') as f:
+                image = Image.open(f)
+                image = image.convert('RGB')
+                image.save(f'{data_dir}/phase2/images/{filename}')
+            image = cv2.imread(f'{data_dir}/phase2/images/{filename}')
+            height, width = image.shape[:2]
+        infos.append({'filename': f'{filename}',
+                      'width': width,
+                      'height': height})
+
+    # 2 convert to coco format data
+    coco = dict()
+    coco['images'] = []
+    coco['type'] = 'instance'
+    coco['categories'] = []
+    coco['annotations'] = []
+    image_set = set()
+    classes = ('aeroplane',
+               'bicycle',
+               'boat',
+               'bus',
+               'car',
+               'chair',
+               'diningtable',
+               'motorbike',
+               'sofa',
+               'train')
+
+    for category_id, name in enumerate(classes):
+        category_item = dict()
+        category_item['supercategory'] = str('none')
+        category_item['id'] = int(category_id)
+        category_item['name'] = str(name)
+        coco['categories'].append(category_item)
+
+    for info in infos:
+        file_name = info['filename']
+        assert file_name not in image_set
+        image_item = dict()
+        image_item['id'] = pathlib.Path(file_name).stem
+        image_item['file_name'] = f'{data_dir}/phase2/images/{file_name}'
+        image_item['height'] = int(info['height'])
+        image_item['width'] = int(info['width'])
+        coco['images'].append(image_item)
+        image_set.add(file_name)
+
+    # 3 dump
+    mmcv.dump(coco, '../Dataset/ROBINv1.1/phase2/phase2.json')
+
+
 def main():
-    csv2coco()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--csv2coco', action='store_true')
+    parser.add_argument('--image2coco', action='store_true')
+
+    args = parser.parse_args()
+
+    if args.csv2coco:
+        csv2coco()
+    if args.image2coco:
+        image2coco()
 
 
 if __name__ == '__main__':
