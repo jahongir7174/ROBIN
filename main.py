@@ -120,7 +120,7 @@ def image2coco():
         file_name = info['filename']
         assert file_name not in image_set
         image_item = dict()
-        image_item['id'] = pathlib.Path(file_name).stem
+        image_item['id'] = file_name[:-4]
         image_item['file_name'] = f'{data_dir}/phase2/images/{file_name}'
         image_item['height'] = int(info['height'])
         image_item['width'] = int(info['width'])
