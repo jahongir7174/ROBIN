@@ -11,19 +11,12 @@ import tqdm
 from PIL import Image
 
 data_dir = '../Dataset/ROBINv1.1'
+classes = ('aeroplane', 'bicycle',
+           'boat', 'bus', 'car', 'chair',
+           'diningtable', 'motorbike', 'sofa', 'train')
 
 
 def csv2coco():
-    classes = ('aeroplane',
-               'bicycle',
-               'boat',
-               'bus',
-               'car',
-               'chair',
-               'diningtable',
-               'motorbike',
-               'sofa',
-               'train')
     phases = ['train',
               'iid_test',
               'nuisances/context',
@@ -115,16 +108,6 @@ def image2coco():
     coco['categories'] = []
     coco['annotations'] = []
     image_set = set()
-    classes = ('aeroplane',
-               'bicycle',
-               'boat',
-               'bus',
-               'car',
-               'chair',
-               'diningtable',
-               'motorbike',
-               'sofa',
-               'train')
 
     for category_id, name in enumerate(classes):
         category_item = dict()
